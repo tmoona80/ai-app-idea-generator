@@ -22,6 +22,12 @@ interface IdeaValidation {
   monetization: string[]
   developmentTime: string
   marketSize: string
+  techStack?: string[]
+  keyFeatures?: string[]
+  strengths?: string[]
+  challenges?: string[]
+  recommendations?: string[]
+  competitorAnalysis?: string
 }
 
 const categories = [
@@ -37,34 +43,6 @@ const categories = [
   "Random (AI chooses)",
 ]
 
-const sampleIdeas: IdeaValidation[] = [
-  {
-    idea: "AI-powered meal planning app that creates personalized weekly menus based on dietary restrictions, budget, and local grocery store inventory",
-    category: "Health & Fitness",
-    viability: 8,
-    feasibility: 7,
-    usability: 9,
-    persona: "Busy professionals aged 25-40 with dietary restrictions or health goals",
-    valueProposition:
-      "Saves 3+ hours weekly on meal planning while ensuring nutritional goals are met within budget constraints",
-    monetization: ["Freemium subscription", "Grocery store partnerships", "Premium recipe collections"],
-    developmentTime: "3-4 weeks",
-    marketSize: "Large - $12B meal kit market growing 12% annually",
-  },
-  {
-    idea: "Smart habit tracker that uses AI to predict when you're most likely to break habits and sends personalized intervention messages",
-    category: "Productivity & Organization",
-    viability: 7,
-    feasibility: 8,
-    usability: 8,
-    persona: "Self-improvement enthusiasts aged 22-45 struggling with consistency",
-    valueProposition: "Increases habit success rate by 40% through predictive behavioral interventions",
-    monetization: ["Premium analytics", "Corporate wellness programs", "Coaching integrations"],
-    developmentTime: "2-3 weeks",
-    marketSize: "Medium - $4.2B personal development app market",
-  },
-]
-
 export default function AIAppIdeaGenerator() {
   const [activeTab, setActiveTab] = useState("generate")
   const [userIdea, setUserIdea] = useState("")
@@ -74,37 +52,67 @@ export default function AIAppIdeaGenerator() {
 
   const handleGenerateIdea = async () => {
     setIsGenerating(true)
-    // Simulate AI generation delay
-    await new Promise((resolve) => setTimeout(resolve, 2000))
+    setValidation(null) // Clear previous results
+    
+    try {
+      const response = await fetch('/api/generate-idea', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          category: selectedCategory || null
+        }),
+      })
 
-    // For demo, randomly select a sample idea
-    const randomIdea = sampleIdeas[Math.floor(Math.random() * sampleIdeas.length)]
-    setValidation(randomIdea)
-    setIsGenerating(false)
+      if (!response.ok) {
+        throw new Error('Failed to generate idea')
+      }
+
+      const ideaData = await response.json()
+      setValidation(ideaData)
+    } catch (error) {
+      console.error('Error generating idea:', error)
+      // Fallback to a simple error message
+      alert('Sorry, there was an error generating the idea. Please try again.')
+    } finally {
+      setIsGenerating(false)
+    }
   }
 
   const handleValidateIdea = async () => {
-    if (!userIdea.trim()) return
-
-    setIsGenerating(true)
-    await new Promise((resolve) => setTimeout(resolve, 2000))
-
-    // Mock validation for user's idea
-    const mockValidation: IdeaValidation = {
-      idea: userIdea,
-      category: selectedCategory || "Productivity & Organization",
-      viability: Math.floor(Math.random() * 3) + 7, // 7-9
-      feasibility: Math.floor(Math.random() * 3) + 6, // 6-8
-      usability: Math.floor(Math.random() * 3) + 7, // 7-9
-      persona: "Tech-savvy millennials aged 25-35 seeking efficiency solutions",
-      valueProposition: "Streamlines daily workflows and reduces time spent on repetitive tasks by 30%",
-      monetization: ["Freemium model", "Enterprise licensing", "API access fees"],
-      developmentTime: "2-4 weeks",
-      marketSize: "Medium - Growing market with strong demand",
+    if (!userIdea.trim()) {
+      alert('Please enter an app idea first.')
+      return
     }
 
-    setValidation(mockValidation)
-    setIsGenerating(false)
+    setIsGenerating(true)
+    setValidation(null) // Clear previous results
+
+    try {
+      const response = await fetch('/api/validate-idea', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          idea: userIdea,
+          category: selectedCategory || 'General'
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to validate idea')
+      }
+
+      const validationData = await response.json()
+      setValidation(validationData)
+    } catch (error) {
+      console.error('Error validating idea:', error)
+      alert('Sorry, there was an error validating your idea. Please try again.')
+    } finally {
+      setIsGenerating(false)
+    }
   }
 
   const getScoreColor = (score: number) => {
@@ -143,9 +151,9 @@ export default function AIAppIdeaGenerator() {
         suggestions: [
           "Reduce technical complexity by using pre-built AI APIs instead of custom models",
           "Minimize data requirements by starting with simpler input/output patterns",
-          "Lower infrastructure costs by choosing serverless or managed services",
-          "Decrease development time by leveraging existing frameworks and templates",
-          "Reduce technical risk by building on proven technology stacks",
+          "Lower development risk by building on proven tech stacks (Next.js, Supabase, etc.)",
+          "Decrease time-to-market by focusing on core AI functionality first",
+          "Reduce infrastructure costs by choosing serverless or managed services",
         ],
       })
     }
@@ -155,35 +163,35 @@ export default function AIAppIdeaGenerator() {
         type: "usability",
         title: "Boost User Experience Score",
         suggestions: [
-          "Simplify the user interface by reducing the number of steps to core value",
-          "Improve onboarding flow to get users to 'aha moment' faster",
-          "Enhance mobile experience since most users will access via mobile devices",
-          "Add intuitive AI interactions that feel natural rather than technical",
-          "Increase user engagement through gamification or progress tracking",
+          "Simplify the user interface by reducing cognitive load and decision points",
+          "Improve onboarding flow to demonstrate value within the first 30 seconds",
+          "Enhance AI transparency by showing users how the system makes decisions",
+          "Reduce friction by minimizing required user inputs and setup steps",
+          "Increase perceived value through better visual design and micro-interactions",
         ],
       })
     }
 
     if (validation.viability >= 8 && validation.feasibility >= 8 && validation.usability >= 8) {
       recommendations.push({
-        type: "general",
-        title: "Optimization Tips for High-Scoring Ideas",
+        type: "optimization",
+        title: "Optimization Opportunities",
         suggestions: [
-          "Focus on rapid MVP development to validate assumptions quickly",
-          "Implement analytics to measure the key metrics that drive your scores",
-          "Consider premium positioning to maximize viability score potential",
-          "Build in feedback loops to continuously improve usability metrics",
+          "Scale viability by expanding to enterprise customers or B2B markets",
+          "Improve feasibility by automating more processes to reduce operational overhead",
+          "Enhance usability through A/B testing key user flows and interactions",
+          "Consider adding AI personalization to increase user engagement scores",
         ],
       })
     } else {
       recommendations.push({
         type: "general",
-        title: "Cross-Cutting Score Improvements",
+        title: "Score Improvement Priorities",
         suggestions: [
-          "Conduct user interviews to validate both market need (viability) and ease of use (usability)",
-          "Create a technical proof-of-concept to de-risk feasibility concerns",
-          "Research competitor weaknesses that you can exploit across all three dimensions",
-          "Consider pivoting to a simpler version that scores higher across all metrics",
+          "Focus on your lowest scoring dimension first for maximum impact",
+          "Validate assumptions through user testing before building complex features",
+          "Consider pivoting features that score below 6 in any dimension",
+          "Benchmark against successful apps in your category to identify gaps",
         ],
       })
     }
@@ -192,9 +200,9 @@ export default function AIAppIdeaGenerator() {
   }
 
   return (
-   <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-    <header className="border-b bg-white">
+      <header className="border-b bg-white">
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-primary/10 rounded-lg">
@@ -447,6 +455,24 @@ export default function AIAppIdeaGenerator() {
                 </CardContent>
               </Card>
             </div>
+
+            {/* Tech Stack */}
+            {validation.techStack && validation.techStack.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="font-serif">Recommended Tech Stack</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap gap-2">
+                    {validation.techStack.map((tech, index) => (
+                      <Badge key={index} variant="secondary">
+                        {tech}
+                      </Badge>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Recommendations Section */}
             <Card>
